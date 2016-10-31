@@ -1,9 +1,6 @@
 package com.maschel.lca.device;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public abstract class Sensor<T> implements IComponent {
+public abstract class Sensor<T> {
 
     private String name;
     private T value;
@@ -19,13 +16,6 @@ public abstract class Sensor<T> implements IComponent {
         this.name = name;
         this.minUpdateInterval = minUpdateIntervalMillis;
     }
-
-    final public void add(IComponent component) {}
-    final public void remove(IComponent component) {}
-    final public List<Component> getComponents() { return new ArrayList<Component>(); }
-    final public List<Component> getDescendantComponents() { return new ArrayList<Component>(); }
-    final public List<Sensor> getSensors() { return new ArrayList<Sensor>(); }
-    final public List<Sensor> getDescendantSensors() { return new ArrayList<Sensor>(); }
 
     final public String getName() {
         return this.name;

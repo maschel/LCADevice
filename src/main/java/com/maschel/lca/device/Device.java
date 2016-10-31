@@ -29,6 +29,12 @@ public abstract class Device {
         return rootComponent.getDescendantSensors();
     }
 
+    final public Actuator<?> getActuatorByName(String name) { return rootComponent.getActuatorByName(name); }
+
+    final public List<Actuator> getActuators() {
+        return rootComponent.getDescendantActuators();
+    }
+
     final public String getId() {
         return id;
     }

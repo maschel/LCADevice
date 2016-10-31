@@ -3,74 +3,91 @@ package com.maschel.lca.device;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Component implements IComponent {
+public class Component {
 
-    private List<IComponent> components = new ArrayList<IComponent>();
+    private List<Component> components = new ArrayList<Component>();
+    private List<Actuator> actuators = new ArrayList<Actuator>();
+    private List<Sensor> sensors = new ArrayList<Sensor>();
+
     private String name;
 
     public Component(String name) {
         this.name = name;
     }
 
-    public void add(IComponent component) {
+    public void add(Component component) {
         components.add(component);
     }
-
-    public void remove(IComponent component) {
+    public void remove(Component component) {
         components.remove(component);
     }
-
-    public String getName() {
-        return this.getName();
+    public void add(Actuator actuator) {
+        actuators.add(actuator);
+    }
+    public void remove(Actuator actuator) {
+        actuators.remove(actuator);
+    }
+    public void add(Sensor sensor) {
+        sensors.add(sensor);
+    }
+    public void remove(Sensor sensor) {
+        sensors.remove(sensor);
     }
 
     public void update() {
-        for (IComponent c: components) {
+        for (Component c: components) {
             c.update();
         }
     }
 
     public List<Component> getComponents() {
-        List<Component> comp = new ArrayList<Component>();
-        for (IComponent c: components) {
-            if (c.getClass().isAssignableFrom(Component.class)) {
-                comp.add((Component) c);
-            }
-        }
-        return comp;
+        return components;
     }
 
     public List<Component> getDescendantComponents() {
-        List<Component> components = new ArrayList<Component>();
-        for (IComponent c: components) {
-            if (c.getClass().isAssignableFrom(Component.class)) {
-                components.add((Component) c);
-            } else {
-                components.addAll(c.getDescendantComponents());
-            }
+        List<Component> components = getComponents();
+        for (Component c: components) {
+            components.addAll(c.getDescendantComponents());
         }
         return components;
     }
 
-    public List<Sensor> getSensors() {
-        List<Sensor> sensors = new ArrayList<Sensor>();
-        for (IComponent c: components) {
-            if (Sensor.class.isAssignableFrom(c.getClass())) {
-                sensors.add((Sensor)c);
-            }
+    public List<Actuator> getActuators() {
+        return actuators;
+    }
+
+    public List<Actuator> getDescendantActuators() {
+        List<Actuator> act = getActuators();
+        for (Component c: components) {
+            act.addAll(c.getDescendantActuators());
         }
+        return act;
+    }
+
+    public Actuator getActuatorByName(String name) {
+        for (Actuator a: actuators) {
+            if (a.getName().equals(name))
+                    return a;
+        }
+        for (Component c: components) {
+            return c.getActuatorByName(name);
+        }
+        return null;
+    }
+
+    public List<Sensor> getSensors() {
         return sensors;
     }
 
     public List<Sensor> getDescendantSensors() {
-        List<Sensor> sensors = new ArrayList<Sensor>();
-        for (IComponent c: components) {
-            if (Sensor.class.isAssignableFrom(c.getClass())) {
-                sensors.add((Sensor)c);
-            } else {
-                sensors.addAll(c.getDescendantSensors());
-            }
+        List<Sensor> sens = getSensors();
+        for (Component c: components) {
+            sens.addAll(c.getDescendantSensors());
         }
-        return sensors;
+        return sens;
+    }
+
+    public String getName() {
+        return this.getName();
     }
 }

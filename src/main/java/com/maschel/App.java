@@ -1,8 +1,13 @@
 package com.maschel;
 
+import com.maschel.lca.device.Actuator;
 import com.maschel.lca.device.Component;
 import com.maschel.lca.device.Device;
 import com.maschel.lca.device.Sensor;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Hello world!
@@ -63,6 +68,14 @@ public class App
                 return "Test";
             }
         });
+
+        rightWheel.add(new Actuator<Double>(Double.class, "LeftMotorSpeed") {
+            @Override
+            public void actuate(Double[] args) throws IllegalArgumentException {
+                if (args.length > 0)
+                    System.out.println("Set LeftMotorSpeed: " + args[0]);
+            }
+        });
         d.addComponent(wheels);
 
         Component leftWheel = new Component("Left Wheel");
@@ -84,5 +97,9 @@ public class App
             s.update();
             System.out.println("Sensor: " + s.getName() + ", Value: " + s.getValue() + ", type: " + s.getType());
         }
+
+        Actuator act = d.getActuatorByName("LeftMotorSpeed");
+        Object[] input = new String[] { "10.0" };
+        act.doNow(input);
     }
 }
