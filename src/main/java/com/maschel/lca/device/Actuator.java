@@ -1,35 +1,33 @@
 package com.maschel.lca.device;
 
-import java.util.Arrays;
+import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
-public abstract class Actuator<T> {
+public abstract class Actuator<T extends Argument> {
 
     private String name;
-    private final Class<T> type;
+    private Class<T> argumentClass;
 
-    public Actuator(Class<T> type, String name) {
+    @SuppressWarnings("unchecked")
+    public Actuator(String name) {
         this.name = name;
-        this.type = type;
+        this.argumentClass = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
-    public void doNow(T[] args) {
-        actuate(createArgumentArray(Arrays.asList(args)));
-    }
-
-    public abstract void actuate(T... args) throws IllegalArgumentException;
+    public abstract void actuate(T args) throws IllegalArgumentException;
 
     public String getName() {
         return name;
     }
 
-    public Class<T> getType() {
-        return this.type;
-    }
-
-    public <T> T[] createArgumentArray(List<T> list) {
-        Class clazz = this.getType();
-        T[] array = (T[]) java.lang.reflect.Array.newInstance(clazz, list.size());
-        return list.toArray(array);
+    public T getParsedArgumentInstance(List<Object> args) throws IllegalArgumentException {
+        T argument;
+        try {
+            argument = argumentClass.newInstance();
+            argument.parseRawArguments(args);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Failed to cast arguments, error: " + ex.getMessage());
+        }
+        return argument;
     }
 }

@@ -1,12 +1,10 @@
 package com.maschel;
 
-import com.maschel.lca.device.Actuator;
-import com.maschel.lca.device.Component;
-import com.maschel.lca.device.Device;
-import com.maschel.lca.device.Sensor;
+import com.maschel.lca.device.*;
+import static com.maschel.Arguments.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,46 +13,64 @@ import java.util.List;
  */
 public class App 
 {
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) throws IllegalAccessException, InstantiationException, IOException {
         final Device d = new Device("testDevice") {
 
-            public void connect() {
-                // connect
+            class UpdateThread extends Thread {
+                private Device device;
+
+                UpdateThread(Device device) {
+                    this.device = device;
+                }
+
+                public void run() {
+                    try {
+                        while(!Thread.currentThread().isInterrupted())
+                        {
+                            System.out.println("Update sensors");
+                            device.updateSensors();
+                            Thread.sleep(1000);
+                        }
+                    } catch (InterruptedException ex) {}
+                }
             }
 
-            public void update() {
-                //
+            private UpdateThread updateThread;
+
+            public void connect() {
+                updateThread = new UpdateThread(this);
+                updateThread.start();
             }
 
             public void disconnect() {
-
+                System.out.println("Disconnect");
+                updateThread.interrupt();
             }
         };
 
         d.addDeviceSensor(new Sensor("doubleSensor") {
-            public Double readSensorData() {
+            public Double readSensor() {
                 return 10.0;
             }
         });
         d.addDeviceSensor(new Sensor("stringSensor") {
-            public String readSensorData() {
+            public String readSensor() {
                 return d.getId();
             }
         });
         d.addDeviceSensor(new Sensor("booleanSensor") {
-            public Boolean readSensorData() {
+            public Boolean readSensor() {
                 return true;
             }
         });
         d.addDeviceSensor(new Sensor("integerSensor") {
-            public Integer readSensorData() {
+            public Integer readSensor() {
                 return 20;
             }
         });
         d.addDeviceSensor(new Sensor("testSensor") {
             @Override
-            public Float readSensorData() {
+            public Float readSensor() {
                 return 0.0f;
             }
         });
@@ -64,16 +80,15 @@ public class App
         wheels.add(rightWheel);
         rightWheel.add(new Sensor("rightWheelSensor") {
 
-            public String readSensorData() {
+            public String readSensor() {
                 return "Test";
             }
         });
 
-        rightWheel.add(new Actuator<Double>(Double.class, "LeftMotorSpeed") {
+        rightWheel.add(new Actuator<MotorSpeedArgument>("LeftMotorSpeed") {
             @Override
-            public void actuate(Double[] args) throws IllegalArgumentException {
-                if (args.length > 0)
-                    System.out.println("Set LeftMotorSpeed: " + args[0]);
+            public void actuate(MotorSpeedArgument args) throws IllegalArgumentException {
+                System.out.println("Set left motor speed: " + args.getSpeed());
             }
         });
         d.addComponent(wheels);
@@ -82,24 +97,39 @@ public class App
         Component leftWheelMotor = new Component("Left Wheel Motor");
         leftWheel.add(leftWheelMotor);
         leftWheelMotor.add(new Sensor<Double>("Left Motor Speed") {
-            public Double readSensorData() {
+            public Double readSensor() {
                 return 120.0;
             }
         });
         leftWheelMotor.add(new Sensor("Left Motor enabled") {
-            public Boolean readSensorData() {
+            public Boolean readSensor() {
                 return true;
             }
         });
         d.addComponent(leftWheel);
 
-        for (Sensor s: d.getSensors()) {
-            s.update();
-            System.out.println("Sensor: " + s.getName() + ", Value: " + s.getValue() + ", type: " + s.getType());
-        }
+//        for (Sensor s: d.getSensors()) {
+//            s.update();
+//            System.out.println("Sensor: " + s.getName() + ", Value: " + s.getValue() + ", type: " + s.getType());
+//        }
+
+        d.connect();
 
         Actuator act = d.getActuatorByName("LeftMotorSpeed");
-        Object[] input = new String[] { "10.0" };
-        act.doNow(input);
+
+        List<Object> arguments = new ArrayList<Object>();
+        arguments.add(10.0);
+        act.actuate(act.getParsedArgumentInstance(arguments));
+
+        while (System.in.available() == 0);
+
+        d.disconnect();
+
+
+//        try {
+//            act.actuate(act.getParsedArgumentInstance(arguments));
+//        } catch (IllegalArgumentException ex) {
+//            System.out.println("Invalid arguments!");
+//        }
     }
 }

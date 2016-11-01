@@ -24,7 +24,7 @@ public abstract class Sensor<T> {
     final public void update() {
         if (lastSensorRead == 0 || (System.currentTimeMillis() > (lastSensorRead + minUpdateInterval))) {
             lastSensorRead = System.currentTimeMillis();
-            this.value = readSensorData();
+            this.value = readSensor();
         }
     }
 
@@ -36,5 +36,5 @@ public abstract class Sensor<T> {
         return getValue().getClass();
     }
 
-    public abstract T readSensorData();
+    public abstract T readSensor();
 }

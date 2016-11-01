@@ -34,9 +34,13 @@ public class Component {
         sensors.remove(sensor);
     }
 
-    public void update() {
+    public void updateSensors() {
+        for (Sensor s: sensors) {
+            s.update();
+        }
+        // Recurse
         for (Component c: components) {
-            c.update();
+            c.updateSensors();
         }
     }
 

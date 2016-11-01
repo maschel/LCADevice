@@ -29,7 +29,7 @@ public abstract class Device {
         return rootComponent.getDescendantSensors();
     }
 
-    final public Actuator<?> getActuatorByName(String name) { return rootComponent.getActuatorByName(name); }
+    final public Actuator getActuatorByName(String name) { return rootComponent.getActuatorByName(name); }
 
     final public List<Actuator> getActuators() {
         return rootComponent.getDescendantActuators();
@@ -39,9 +39,11 @@ public abstract class Device {
         return id;
     }
 
-    public abstract void connect();
+    final public void updateSensors() {
+        rootComponent.updateSensors();
+    }
 
-    public abstract void update();
+    public abstract void connect();
 
     public abstract void disconnect();
 }
