@@ -1,5 +1,7 @@
 package com.maschel.lca.device;
 
+import com.maschel.lca.device.actuator.Actuator;
+
 import java.util.ArrayList;
 import java.util.List;
 

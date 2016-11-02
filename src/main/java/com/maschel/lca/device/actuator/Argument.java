@@ -1,4 +1,4 @@
-package com.maschel.lca.device;
+package com.maschel.lca.device.actuator;
 
 import java.util.List;
 

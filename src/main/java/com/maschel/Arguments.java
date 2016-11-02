@@ -1,6 +1,6 @@
 package com.maschel;
 
-import com.maschel.lca.device.Argument;
+import com.maschel.lca.device.actuator.Argument;
 
 import java.util.List;
 

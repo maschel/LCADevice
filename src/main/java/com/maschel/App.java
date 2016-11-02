@@ -1,6 +1,8 @@
 package com.maschel;
 
 import com.maschel.lca.device.*;
+import com.maschel.lca.device.actuator.Actuator;
+
 import static com.maschel.Arguments.*;
 
 import java.io.IOException;
@@ -91,6 +93,12 @@ public class App
                 System.out.println("Set left motor speed: " + args.getSpeed());
             }
         });
+        rightWheel.add(new Actuator<String>("RightMotorThing") {
+            @Override
+            public void actuate(String arg) throws IllegalArgumentException {
+                System.out.println("Set left motor speed: " + arg);
+            }
+        });
         d.addComponent(wheels);
 
         Component leftWheel = new Component("Left Wheel");
@@ -120,6 +128,9 @@ public class App
         List<Object> arguments = new ArrayList<Object>();
         arguments.add(10.0);
         act.actuate(act.getParsedArgumentInstance(arguments));
+
+        Actuator act2 = d.getActuatorByName("RightMotorThing");
+        act2.actuate("Test");
 
         while (System.in.available() == 0);
 
