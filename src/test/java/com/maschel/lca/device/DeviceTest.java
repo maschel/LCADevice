@@ -33,7 +33,7 @@
  *
  */
 
-package com.maschel;
+package com.maschel.lca.device;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
