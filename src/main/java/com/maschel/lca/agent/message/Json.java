@@ -33,10 +33,29 @@
  *
  */
 
-package com.maschel.lca.device.actuator;
+package com.maschel.lca.agent.message;
+
+import com.maschel.lca.device.Sensor;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public abstract class Argument {
-    public abstract void parseRawArguments(List<Object> args) throws IllegalArgumentException;
+public class Json {
+
+    public static JSONObject sensorToJSON(Sensor sensor) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("name", sensor.getName());
+        jsonObject.put("type", sensor.getType().getCanonicalName());
+        jsonObject.put("value", sensor.getValue());
+        return jsonObject;
+    }
+
+    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
+        JSONArray array = new JSONArray();
+        for (Sensor s : sensors) {
+            array.add(sensorToJSON(s));
+        }
+        return array;
+    }
 }

@@ -33,10 +33,30 @@
  *
  */
 
-package com.maschel.lca.device.actuator;
+package com.maschel;
 
-import java.util.List;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
-public abstract class Argument {
-    public abstract void parseRawArguments(List<Object> args) throws IllegalArgumentException;
+
+public class DeviceTest extends TestCase {
+
+
+    public DeviceTest(String testName )
+    {
+        super( testName );
+    }
+
+
+    public static Test suite()
+    {
+        return new TestSuite( DeviceTest.class );
+    }
+
+
+    public void testDevice()
+    {
+        assertTrue( true );
+    }
 }
