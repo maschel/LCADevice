@@ -108,10 +108,12 @@ public class Component {
     public Actuator getActuatorByName(String name) {
         for (Actuator a: actuators) {
             if (a.getName().equals(name))
-                    return a;
+                return a;
         }
         for (Component c: components) {
-            return c.getActuatorByName(name);
+            if (c.getActuatorByName(name) != null) {
+                return c.getActuatorByName(name);
+            }
         }
         return null;
     }
@@ -122,7 +124,9 @@ public class Component {
                 return s;
         }
         for (Component c: components) {
-            return c.getSensorByName(name);
+            if (c.getSensorByName(name) != null) {
+                return c.getSensorByName(name);
+            }
         }
         return null;
     }
