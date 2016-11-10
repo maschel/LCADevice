@@ -103,7 +103,7 @@ public abstract class Device {
     }
 
     /**
-     * Searches the device & component tree for a sensor with the given name.
+     * Searches the device and component tree for a sensor with the given name.
      * @param name Sensor name.
      * @return {@link Sensor} instance with given sensor name or null if not found.
      */
@@ -118,7 +118,7 @@ public abstract class Device {
     }
 
     /**
-     * Searches the device & component tree for a actuator with the given name.
+     * Searches the device and component tree for a actuator with the given name.
      * @param name Actuator name.
      * @return {@link Actuator} instance with given actuator name or null if not found.
      */

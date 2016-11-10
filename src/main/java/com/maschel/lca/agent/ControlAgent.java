@@ -52,7 +52,7 @@ import org.json.simple.parser.ParseException;
 
 /**
  * ControlAgent class
- * The ControlAgent is used to get sensor value requests & actuator commands from the agent platform and forward
+ * The ControlAgent is used to get sensor value requests and actuator commands from the agent platform and forward
  * them to the device implementation. This Class is also responsible for the device lifecycle:
  * <ul>
  *     <li>Load the device class</li>
