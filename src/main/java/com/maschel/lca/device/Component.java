@@ -40,6 +40,10 @@ import com.maschel.lca.device.actuator.Actuator;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Component class
+ * This class should be used for adding components to a device, and can have (multiple) sub components (tree structure).
+ */
 public class Component {
 
     private List<Component> components = new ArrayList<Component>();
@@ -48,6 +52,10 @@ public class Component {
 
     private String name;
 
+    /**
+     * Default component constructor.
+     * @param name The name of the component.
+     */
     public Component(String name) {
         this.name = name;
     }
@@ -71,6 +79,9 @@ public class Component {
         sensors.remove(sensor);
     }
 
+    /**
+     * Update the sensor values of the current component and any sub components.
+     */
     public void updateSensors() {
         for (Sensor s: sensors) {
             s.update();
@@ -81,10 +92,18 @@ public class Component {
         }
     }
 
+    /**
+     * Get the children of the component (non recursive).
+     * @return List of {@link Component}.
+     */
     public List<Component> getComponents() {
         return components;
     }
 
+    /**
+     * Get the children of the current component and all sub components.
+     * @return List of {@link Component}.
+     */
     public List<Component> getDescendantComponents() {
         List<Component> components = getComponents();
         for (Component c: components) {
@@ -93,10 +112,18 @@ public class Component {
         return components;
     }
 
+    /**
+     * Get the actuators of the component (non recursive).
+     * @return List of {@link Actuator}.
+     */
     public List<Actuator> getActuators() {
         return actuators;
     }
 
+    /**
+     * Get the actuators of the current component and all sub components.
+     * @return List of {@link Actuator}.
+     */
     public List<Actuator> getDescendantActuators() {
         List<Actuator> act = getActuators();
         for (Component c: components) {
@@ -105,6 +132,11 @@ public class Component {
         return act;
     }
 
+    /**
+     * Get a actuator from the current component (or any sub component) by name.
+     * @param name The name to search.
+     * @return The {@link Component} with the given name or null if not found.
+     */
     public Actuator getActuatorByName(String name) {
         for (Actuator a: actuators) {
             if (a.getName().equals(name))
@@ -118,6 +150,11 @@ public class Component {
         return null;
     }
 
+    /**
+     * Get a sensor from the current component (or andy sub component) by name.
+     * @param name The name to search.
+     * @return The {@link Sensor} with the given name or null if not found.
+     */
     public Sensor getSensorByName(String name) {
         for (Sensor s: sensors) {
             if (s.getName().equals(name))
@@ -131,10 +168,18 @@ public class Component {
         return null;
     }
 
+    /**
+     * Get the sensors of the current component (non recursive).
+     * @return List of {@link Sensor}
+     */
     public List<Sensor> getSensors() {
         return sensors;
     }
 
+    /**
+     * Get the sensors of the current component and all (sub)components
+     * @return List of {@link Sensor}
+     */
     public List<Sensor> getDescendantSensors() {
         List<Sensor> sens = getSensors();
         for (Component c: components) {
@@ -143,6 +188,10 @@ public class Component {
         return sens;
     }
 
+    /**
+     * Get the name of the component
+     * @return component name
+     */
     public String getName() {
         return this.getName();
     }

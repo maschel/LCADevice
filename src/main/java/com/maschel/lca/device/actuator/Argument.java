@@ -37,6 +37,16 @@ package com.maschel.lca.device.actuator;
 
 import java.util.List;
 
-public abstract class Argument {
-    public abstract void parseRawArguments(List<Object> args) throws IllegalArgumentException;
+/**
+ * Argument interface
+ * Implement this interface to create a custom Argument class
+ */
+public interface Argument {
+
+    /**
+     * Parse the raw Object arguments to the Argument implementation
+     * @param args List of Object containing the arguments
+     * @throws IllegalArgumentException Failed to cast/parse arguments to the specified implementation.
+     */
+    void parseRawArguments(List<Object> args) throws IllegalArgumentException;
 }

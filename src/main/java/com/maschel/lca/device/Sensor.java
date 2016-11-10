@@ -35,6 +35,11 @@
 
 package com.maschel.lca.device;
 
+/**
+ * Sensor class
+ * This class should be used for adding sensors to the {@link Device} or {@link Component}.
+ * @param <T> The type of the sensor value.
+ */
 public abstract class Sensor<T> {
 
     private String name;
@@ -43,19 +48,35 @@ public abstract class Sensor<T> {
     private long minUpdateInterval = 0;
     private long lastSensorRead = 0;
 
+    /**
+     * Default Sensor constructor.
+     * @param name Name of the sensor.
+     */
     public Sensor(String name) {
         this.name = name;
     }
 
+    /**
+     * Sensor constructor that sets a minimum sensor update interval.
+     * @param name Name of the sensor.
+     * @param minUpdateIntervalMillis The minimal sensor update interval.
+     */
     public Sensor(String name, long minUpdateIntervalMillis) {
         this.name = name;
         this.minUpdateInterval = minUpdateIntervalMillis;
     }
 
+    /**
+     * Get the name of the sensor
+     * @return sensor name
+     */
     final public String getName() {
         return this.name;
     }
 
+    /**
+     * Read a new sensor value from the device (respecting the interval).
+     */
     final public void update() {
         if (lastSensorRead == 0 || (System.currentTimeMillis() > (lastSensorRead + minUpdateInterval))) {
             lastSensorRead = System.currentTimeMillis();
@@ -63,14 +84,27 @@ public abstract class Sensor<T> {
         }
     }
 
+    /**
+     * Get the current value of the sensor (instance)
+     * @return sensor value
+     */
     final public T getValue() {
         this.update();
         return this.value;
     }
 
+    /**
+     * Get the type of the sensor value
+     * @return Class of sensor value
+     */
     final public Class<?> getType() {
         return getValue().getClass();
     }
 
+    /**
+     * Read the sensor value from the device.
+     * This method should implement the functionality to read the device sensor.
+     * @return Sensor value in the type specified by the {@link Sensor} class.
+     */
     public abstract T readSensor();
 }

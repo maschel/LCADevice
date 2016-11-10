@@ -38,42 +38,84 @@ package com.maschel.lca.device.actuator;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
+/**
+ * Actuator class
+ * This class should be used to add Actuators to a device or component.
+ * @param <T> The type of the actuator arguments (java type or {@link Argument}).
+ */
 public abstract class Actuator<T> {
 
     private String name;
     private Class<T> argumentClass;
 
+    /**
+     * Default actuator constructor.
+     * This constructor automatically sets the argumentClass attribute to the type of T
+     * @param name The name of the Actuator
+     */
     @SuppressWarnings("unchecked")
     public Actuator(String name) {
         this.name = name;
         this.argumentClass = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
-    public abstract void actuate(T args) throws IllegalArgumentException;
+    /**
+     * Active a device actuator.
+     * This method should implement the functionality to activate a device actuator.
+     * @param args The argument needed for the actuator (can be a custom {@link Argument} implementation or a java type).
+     */
+    public abstract void actuate(T args);
 
+    /**
+     * Get the name of the actuator.
+     * @return The actuator name.
+     */
     public String getName() {
         return name;
     }
 
-    public T getParsedArgumentInstance(List<Object> args) throws IllegalArgumentException {
+    /**
+     * Parse the List of Object arguments (received from the remote agent) to the types expected by the Actuator.
+     * This method can be used to call the actuate method like this:
+     * testActuator.actuate(testActuator.getParsedArgumentInstance(args))
+     * @param args List of Object arguments
+     * @return Parsed argument (java type or {@link Argument} implementation).
+     * @throws Exception When unable to cast arguments to expected types.
+     */
+    public T getParsedArgumentInstance(List<Object> args) throws Exception {
         try {
 
+            // Argument void type
             if (argumentClass == Void.class) {
                 return null;
             }
 
+            // Argument of type Argument.class
             T argument = argumentClass.newInstance();
             if (Argument.class.isAssignableFrom(argument.getClass())) {
                 Argument argInstance = (Argument) argument;
                 argInstance.parseRawArguments(args);
                 argument = (T) argInstance;
                 return argument;
-            } else {
-                return (T)args.get(0);
             }
 
+            // JAVA composite type
+            if (argumentClass == Double.class || argumentClass == Float.class ||
+                    argumentClass == Long.class || argumentClass == Integer.class ||
+                    argumentClass == Short.class || argumentClass == Character.class ||
+                    argumentClass == Byte.class || argumentClass == Boolean.class)
+            {
+                if (args.size() > 0) {
+                    return (T) args.get(0);
+                }
+            }
+
+            throw new Exception("Actuator argument type not matching any expected types");
+
         } catch (Exception ex) {
-            throw new IllegalArgumentException("Failed to cast arguments, error: " + ex.getMessage());
+            Exception e = new IllegalArgumentException("Failed to cast actuator arguments: " + ex.getMessage());
+            e.setStackTrace(ex.getStackTrace());
+            throw e;
         }
     }
 }
