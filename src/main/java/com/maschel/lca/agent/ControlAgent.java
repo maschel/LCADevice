@@ -50,10 +50,26 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+/**
+ * ControlAgent class
+ * The ControlAgent is used to get sensor value requests & actuator commands from the agent platform and forward
+ * them to the device implementation. This Class is also responsible for the device lifecycle:
+ * <ul>
+ *     <li>Load the device class</li>
+ *     <li>Setup</li>
+ *     <li>Connect</li>
+ *     <li>Update(loop)</li>
+ *     <li>(Process requests)</li>
+ *     <li>Disconnect</li>
+ * </ul>
+ */
 public class ControlAgent extends Agent {
 
     private Device agentDevice;
 
+    /**
+     * Setup the agent platform and setup the device.
+     */
     protected void setup() {
 
         // Get agent arguments
@@ -88,6 +104,10 @@ public class ControlAgent extends Agent {
 
     }
 
+    /**
+     * Default MessagePerformer. Is called on a new message and passes it to the correct behaviour based on the
+     * ontology specified in the message.
+     */
     private class MessagePerformer extends CyclicBehaviour {
         private static final String SENSOR_ONTOLOGY = "sensor";
         private static final String SENSOR_LIST_ONTOLOGY = "sensorlist";
@@ -115,6 +135,9 @@ public class ControlAgent extends Agent {
         }
     }
 
+    /**
+     * SensorBehaviour, is called on a sensor request message
+     */
     private class SensorBehaviour extends OneShotBehaviour {
 
         private ACLMessage message;
@@ -136,6 +159,9 @@ public class ControlAgent extends Agent {
         }
     }
 
+    /**
+     * SensorListBehaviour, is called on a sensorList request message
+     */
     private class SensorListBehaviour extends OneShotBehaviour {
 
         private ACLMessage message;
@@ -153,6 +179,9 @@ public class ControlAgent extends Agent {
         }
     }
 
+    /**
+     * ActuatorBehaviour, is called on a actuator command message
+     */
     private class ActuatorBehaviour extends OneShotBehaviour {
 
         private static final String JSON_ENCODING = "json";
@@ -165,25 +194,59 @@ public class ControlAgent extends Agent {
 
         @Override
         public void action() {
-            if (message.getEncoding() != null && message.getEncoding().equals(JSON_ENCODING)) {
-                JSONParser jsonParser = new JSONParser();
-                try {
-                    JSONObject jsonObject = (JSONObject)jsonParser.parse(message.getContent());
-                    String name = jsonObject.get("name").toString();
-                    if (name != null) {
-                        Actuator actuator = agentDevice.getActuatorByName(name);
-                        if (actuator != null) {
 
-                            JSONArray jsonArguments = (JSONArray)jsonObject.get("arguments");
-                            if (jsonArguments != null) {
-                                actuator.actuate(actuator.getParsedArgumentInstance(jsonArguments));
-                            }
-                        }
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
+            if (message.getEncoding() == null || !message.getEncoding().equals(JSON_ENCODING)) {
+                sendFailureReply("Invalid encoding");
+                return;
             }
+
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonObject;
+            try {
+                jsonObject = (JSONObject)jsonParser.parse(message.getContent());
+            } catch(ParseException pe) {
+                sendFailureReply("Failed to parse JSON message");
+                return;
+            }
+
+            String actuatorName = jsonObject.get("name").toString();
+            if (actuatorName == null) {
+                sendFailureReply("No actuator name specified");
+                return;
+            }
+
+            Actuator actuator = agentDevice.getActuatorByName(actuatorName);
+            if (actuator == null) {
+                sendFailureReply("Could not find actuator: " + actuatorName);
+                return;
+            }
+
+            JSONArray jsonArguments = (JSONArray)jsonObject.get("arguments");
+            if (jsonArguments == null) {
+                sendFailureReply("No arguments found");
+            }
+
+            try {
+                actuator.actuate(actuator.getParsedArgumentInstance(jsonArguments));
+            } catch (Exception e) {
+                sendFailureReply("Failed to actuate: " + e.getMessage());
+                return;
+            }
+
+            sendSuccessReply();
+        }
+
+        private void sendSuccessReply() {
+            ACLMessage reply = message.createReply();
+            reply.setPerformative(ACLMessage.AGREE);
+            myAgent.send(reply);
+        }
+
+        private void sendFailureReply(String reason) {
+            ACLMessage reply = message.createReply();
+            reply.setPerformative(ACLMessage.FAILURE);
+            reply.setContent(reason);
+            myAgent.send(reply);
         }
     }
 
