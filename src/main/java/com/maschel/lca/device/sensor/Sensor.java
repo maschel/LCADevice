@@ -33,20 +33,28 @@
  *
  */
 
-package com.maschel.lca.device;
+package com.maschel.lca.device.sensor;
+
+import com.maschel.lca.device.Component;
+import com.maschel.lca.device.Device;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sensor class
  * This class should be used for adding sensors to the {@link Device} or {@link Component}.
  * @param <T> The type of the sensor value.
  */
-public abstract class Sensor<T> {
+public abstract class Sensor<T> implements ObservableSensor {
 
     private String name;
     private T value;
 
     private long minUpdateInterval = 0;
     private long lastSensorRead = 0;
+
+    private List<SensorObserver> observers = new ArrayList<>();
 
     /**
      * Default Sensor constructor.
@@ -67,21 +75,39 @@ public abstract class Sensor<T> {
     }
 
     /**
-     * Get the name of the sensor
-     * @return sensor name
-     */
-    final public String getName() {
-        return this.name;
-    }
-
-    /**
      * Read a new sensor value from the device (respecting the interval).
      */
     final public void update() {
         if (lastSensorRead == 0 || (System.currentTimeMillis() > (lastSensorRead + minUpdateInterval))) {
             lastSensorRead = System.currentTimeMillis();
             this.value = readSensor();
+            notifyObservers();
         }
+    }
+
+    @Override
+    final public void registerObserver(SensorObserver obj) {
+        observers.add(obj);
+    }
+
+    @Override
+    final public void unregisterObserver(SensorObserver obj) {
+        observers.remove(obj);
+    }
+
+    @Override
+    final public void notifyObservers() {
+        for (SensorObserver observer: observers) {
+            observer.sensorUpdateNotification();
+        }
+    }
+
+    /**
+     * Get the name of the sensor
+     * @return sensor name
+     */
+    final public String getName() {
+        return this.name;
     }
 
     /**

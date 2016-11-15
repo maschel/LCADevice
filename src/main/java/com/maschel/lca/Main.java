@@ -33,42 +33,57 @@
  *
  */
 
-package com.maschel.lca.agent.message;
+package com.maschel.lca;
 
+import com.maschel.lca.analytics.AggregateCounter;
+import com.maschel.lca.analytics.AggregateOperator;
+import com.maschel.lca.analytics.Analytic;
+import com.maschel.lca.analytics.TimeRange;
+import com.maschel.lca.device.Device;
 import com.maschel.lca.device.sensor.Sensor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
-import java.util.List;
+import java.io.IOException;
 
-/**
- * Converters for JSON to domain objects (Sensor, Actuator, etc.)
- */
-public class Json {
+public class Main {
 
-    /**
-     * Converts a sensor object to JSONObject.
-     * @param sensor The sensor.
-     * @return JSON representation of Sensor.
-     */
-    public static JSONObject sensorToJSON(Sensor sensor) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", sensor.getName());
-        jsonObject.put("type", sensor.getType().getCanonicalName());
-        jsonObject.put("value", sensor.getValue());
-        return jsonObject;
-    }
+    public static void main(String [] args) throws IOException {
+        Device testDevice = new Device("testDevice", 50) {
+            @Override
+            public void setup() {
 
-    /**
-     * Converts a List of Sensors to a JSONArray.
-     * @param sensors The sensor list.
-     * @return JSONArray representation of Sensor.
-     */
-    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
-        JSONArray array = new JSONArray();
-        for (Sensor s : sensors) {
-            array.add(sensorToJSON(s));
+            }
+
+            @Override
+            public void connect() {
+
+            }
+
+            @Override
+            public void update() {
+
+            }
+
+            @Override
+            public void disconnect() {
+
+            }
+        };
+
+        Sensor testSensor = new Sensor("testSensor", 50) {
+            @Override
+            public Double readSensor() {
+                return 12.0;
+            }
+        };
+
+        // Analytics
+        Analytic.registerAnalytic(new Analytic(testSensor, AggregateOperator.DOUBLE_TOTAL, TimeRange.HOUR));
+        Analytic.registerAnalytic(new Analytic(testSensor, AggregateCounter.DOUBLE_HIGHER_THEN(10.0), TimeRange.MINUTE));
+        Analytic.registerAnalytic(new Analytic(testSensor, AggregateOperator.DOUBLE_MAX, TimeRange.DAY));
+
+        // Fake some sensor polling
+        while(System.in.available() == 0) {
+            testSensor.update();
         }
-        return array;
     }
 }

@@ -36,6 +36,7 @@
 package com.maschel.lca.device;
 
 import com.maschel.lca.device.actuator.Actuator;
+import com.maschel.lca.device.sensor.Sensor;
 
 import java.util.ArrayList;
 import java.util.List;

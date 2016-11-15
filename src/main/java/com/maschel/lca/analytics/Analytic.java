@@ -33,42 +33,55 @@
  *
  */
 
-package com.maschel.lca.agent.message;
+package com.maschel.lca.analytics;
 
+import com.maschel.lca.analytics.storage.AnalyticsStorage;
+import com.maschel.lca.analytics.storage.AnalyticsStorageJSON;
 import com.maschel.lca.device.sensor.Sensor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.maschel.lca.device.sensor.SensorObserver;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Converters for JSON to domain objects (Sensor, Actuator, etc.)
- */
-public class Json {
+public class Analytic implements SensorObserver {
 
-    /**
-     * Converts a sensor object to JSONObject.
-     * @param sensor The sensor.
-     * @return JSON representation of Sensor.
-     */
-    public static JSONObject sensorToJSON(Sensor sensor) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", sensor.getName());
-        jsonObject.put("type", sensor.getType().getCanonicalName());
-        jsonObject.put("value", sensor.getValue());
-        return jsonObject;
+    private static List<Analytic> analytics = new ArrayList<>();
+    private static AnalyticsStorage storage = new AnalyticsStorageJSON();
+
+    private Sensor sensor;
+    private Aggregates aggregate;
+    private TimeRange timeRange;
+
+    public static void registerAnalytic(Analytic analytic) {
+        analytics.add(analytic);
     }
 
-    /**
-     * Converts a List of Sensors to a JSONArray.
-     * @param sensors The sensor list.
-     * @return JSONArray representation of Sensor.
-     */
-    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
-        JSONArray array = new JSONArray();
-        for (Sensor s : sensors) {
-            array.add(sensorToJSON(s));
-        }
-        return array;
+    public static List<Analytic> getAnalytics() {
+        return analytics;
+    }
+
+    public Analytic(Sensor sensor, Aggregates aggregate, TimeRange timeRange) {
+        this.sensor = sensor;
+        sensor.registerObserver(this);
+
+        this.aggregate = aggregate;
+        this.timeRange = timeRange;
+    }
+
+    public Sensor getSensor() {
+        return sensor;
+    }
+
+    public Aggregates getAggregate() {
+        return aggregate;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
+    @Override
+    public void sensorUpdateNotification() {
+        storage.store(this);
     }
 }

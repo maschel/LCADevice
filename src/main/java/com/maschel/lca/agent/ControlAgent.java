@@ -37,7 +37,7 @@ package com.maschel.lca.agent;
 
 import com.maschel.lca.agent.message.Json;
 import com.maschel.lca.device.Device;
-import com.maschel.lca.device.Sensor;
+import com.maschel.lca.device.sensor.Sensor;
 import com.maschel.lca.device.actuator.Actuator;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;

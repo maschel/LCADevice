@@ -33,42 +33,13 @@
  *
  */
 
-package com.maschel.lca.agent.message;
+package com.maschel.lca.analytics;
 
-import com.maschel.lca.device.sensor.Sensor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+public interface Aggregates<T, U, R> {
 
-import java.util.List;
+    R calculate(T firstArg, U secondArg);
 
-/**
- * Converters for JSON to domain objects (Sensor, Actuator, etc.)
- */
-public class Json {
+    String getDescription();
 
-    /**
-     * Converts a sensor object to JSONObject.
-     * @param sensor The sensor.
-     * @return JSON representation of Sensor.
-     */
-    public static JSONObject sensorToJSON(Sensor sensor) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", sensor.getName());
-        jsonObject.put("type", sensor.getType().getCanonicalName());
-        jsonObject.put("value", sensor.getValue());
-        return jsonObject;
-    }
-
-    /**
-     * Converts a List of Sensors to a JSONArray.
-     * @param sensors The sensor list.
-     * @return JSONArray representation of Sensor.
-     */
-    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
-        JSONArray array = new JSONArray();
-        for (Sensor s : sensors) {
-            array.add(sensorToJSON(s));
-        }
-        return array;
-    }
+    R getDefaultValue();
 }

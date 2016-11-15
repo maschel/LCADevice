@@ -33,42 +33,34 @@
  *
  */
 
-package com.maschel.lca.agent.message;
+package com.maschel.lca.analytics;
 
-import com.maschel.lca.device.sensor.Sensor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * Converters for JSON to domain objects (Sensor, Actuator, etc.)
- */
-public class Json {
+public enum TimeRange {
 
-    /**
-     * Converts a sensor object to JSONObject.
-     * @param sensor The sensor.
-     * @return JSON representation of Sensor.
-     */
-    public static JSONObject sensorToJSON(Sensor sensor) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", sensor.getName());
-        jsonObject.put("type", sensor.getType().getCanonicalName());
-        jsonObject.put("value", sensor.getValue());
-        return jsonObject;
+    YEAR("year", new String[] { "yyyy" }),
+    MONTH("month", new String[] { "yyyy", "M" }),
+    DAY("day", new String[] { "yyyy", "M", "d" }),
+    HOUR("hour", new String[] { "yyyy", "M", "d", "H" }),
+    MINUTE("minute", new String[] { "yyyy", "M", "d", "H", "m" }),
+    SECOND("second", new String[] { "yyyy", "M", "d", "H", "m", "s" });
+
+    private final String description;
+    private final List<String> timeComponents;
+
+    TimeRange(String description, String[] timeComponents) {
+        this.description = description;
+        this.timeComponents = new ArrayList<>(Arrays.asList(timeComponents));
     }
 
-    /**
-     * Converts a List of Sensors to a JSONArray.
-     * @param sensors The sensor list.
-     * @return JSONArray representation of Sensor.
-     */
-    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
-        JSONArray array = new JSONArray();
-        for (Sensor s : sensors) {
-            array.add(sensorToJSON(s));
-        }
-        return array;
+    public List<String> getTimeComponents() {
+        return timeComponents;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

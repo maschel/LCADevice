@@ -36,6 +36,7 @@
 package com.maschel.lca.device;
 
 import com.maschel.lca.device.actuator.Actuator;
+import com.maschel.lca.device.sensor.Sensor;
 
 import java.util.List;
 
@@ -56,7 +57,8 @@ import java.util.List;
  */
 public abstract class Device {
 
-    private final String id;
+    public static String deviceId = "";
+
     private final int sensorUpdateInterval;
     private Component rootComponent;
 
@@ -67,7 +69,7 @@ public abstract class Device {
      * @param sensorUpdateInterval The interval at which sensors should be updated.
      */
     public Device(String id, int sensorUpdateInterval) {
-        this.id = id;
+        deviceId = id;
         this.sensorUpdateInterval = sensorUpdateInterval;
         this.rootComponent = new Component(id);
     }
@@ -137,7 +139,7 @@ public abstract class Device {
      * @return The Device id.
      */
     final public String getId() {
-        return id;
+        return deviceId;
     }
 
     /**
