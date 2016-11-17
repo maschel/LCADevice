@@ -40,4 +40,6 @@ import com.maschel.lca.analytics.Analytic;
 public interface AnalyticsStorage {
 
     void store(Analytic analytic);
+
+    void close();
 }

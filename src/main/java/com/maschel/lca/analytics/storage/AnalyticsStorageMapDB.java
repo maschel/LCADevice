@@ -33,48 +33,39 @@
  *
  */
 
-package com.maschel.lca.analytics;
+package com.maschel.lca.analytics.storage;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.maschel.lca.analytics.Analytic;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
 
-public enum TimeRange {
+import java.util.concurrent.ConcurrentMap;
 
-    YEAR("year", new String[] { "yyyy" }),
-    MONTH("month", new String[] { "yyyy", "M" }),
-    DAY("day", new String[] { "yyyy", "M", "d" }),
-    HOUR("hour", new String[] { "yyyy", "M", "d", "H" }),
-    MINUTE("minute", new String[] { "yyyy", "M", "d", "H", "m" }),
-    SECOND("second", new String[] { "yyyy", "M", "d", "H", "m", "s" });
+public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
-    private final String description;
-    private final List<String> timeComponents;
+    private static String DATABASE_FILE = "analytics.db";
+    private static String ANALYTICS_MAP = "analytics";
 
-    TimeRange(String description, String[] timeComponents) {
-        this.description = description;
-        this.timeComponents = new ArrayList<>(Arrays.asList(timeComponents));
-    }
+    DB db = DBMaker.fileDB(DATABASE_FILE)
+            .closeOnJvmShutdown()
+            .make();
 
-    public String getCurrentTimeString() {
-        // TODO: Reformat this class to not use List
-        String components = "";
-        Iterator<String> it = timeComponents.iterator();
-        while(it.hasNext()) {
-            components += it.next();
-            if (it.hasNext())
-                components += "-";
+    ConcurrentMap analyticsMap = db.hashMap(ANALYTICS_MAP).createOrOpen();
+
+    @Override
+    public void store(Analytic analytic) {
+        String currentKey = analytic.getCurrentDescription();
+        if(!analyticsMap.containsKey(currentKey)) {
+            analyticsMap.put(currentKey, analytic.getAggregate().getDefaultValue());
         }
-
-        Date now = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat(components);
-        return formatter.format(now);
+        Object currentValue = analyticsMap.get(currentKey);
+        analyticsMap.put(currentKey, analytic.getAggregate().calculate(currentValue, analytic.getSensor().getValue()));
     }
 
-    public List<String> getTimeComponents() {
-        return timeComponents;
-    }
-
-    public String getDescription() {
-        return description;
+    @Override
+    public void close() {
+        if(!db.isClosed()) {
+            db.close();
+        }
     }
 }

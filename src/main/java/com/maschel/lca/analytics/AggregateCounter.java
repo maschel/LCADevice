@@ -43,38 +43,38 @@ public class AggregateCounter<T, U, R> implements Aggregates<T, U, R> {
     private BiFunction<T, U, R> operator;
     private R defaultValue;
 
-    public AggregateCounter(String description, BiFunction<T, U, R> operator, R defaultValue) {
-        this.description = description;
+    public AggregateCounter(String description, Object condition, BiFunction<T, U, R> operator, R defaultValue) {
+        this.description = description + "(" + condition.toString() + ")";
         this.operator = operator;
         this.defaultValue = defaultValue;
     }
 
     public static AggregateCounter<Integer, Integer, Integer> INTEGER_HIGHER_THEN(Integer condition) {
-        return new AggregateCounter<>("higher_then_" + condition.toString(),
+        return new AggregateCounter<>("higher-then", condition,
                 (counter, value) -> value > condition ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, Integer, Integer> INTEGER_LOWER_THEN(Integer condition) {
-        return new AggregateCounter<>("lower_then_" + condition.toString(),
+        return new AggregateCounter<>("lower-then", condition,
                 (counter, value) -> value < condition ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, Double, Integer> DOUBLE_HIGHER_THEN(Double condition) {
-        return new AggregateCounter<>("higher_then_" + condition.toString(),
+        return new AggregateCounter<>("higher-then", condition.toString() + ")",
                 (counter, value) -> value > condition ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, Double, Integer> DOUBLE_LOWER_THEN(Double condition) {
-        return new AggregateCounter<>("lower_then_" + condition.toString(),
+        return new AggregateCounter<>("lower-then", condition,
                 (counter, value) -> value < condition ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, String, Integer> STRING_EQUAL(String condition) {
-        return new AggregateCounter<>("string_equal_" + condition,
+        return new AggregateCounter<>("string-equal", condition,
                 (counter, value) -> value.equals(condition) ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, Boolean, Integer> BOOLEAN_TRUE(Boolean condition) {
-        return new AggregateCounter<>("is_true",
+        return new AggregateCounter<>("is-true", condition,
                 (counter, value) -> value ? ++counter : counter, 0);
     }
     public static AggregateCounter<Integer, Boolean, Integer> BOOLEAN_FALSE(Boolean condition) {
-        return new AggregateCounter<>("is_false",
+        return new AggregateCounter<>("is-false", condition,
                 (counter, value) -> !value ? ++counter : counter, 0);
     }
 

@@ -36,17 +36,18 @@
 package com.maschel.lca.analytics;
 
 import com.maschel.lca.analytics.storage.AnalyticsStorage;
-import com.maschel.lca.analytics.storage.AnalyticsStorageJSON;
+import com.maschel.lca.analytics.storage.AnalyticsStorageMapDB;
 import com.maschel.lca.device.sensor.Sensor;
 import com.maschel.lca.device.sensor.SensorObserver;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Analytic implements SensorObserver {
+public class Analytic implements SensorObserver, Serializable {
 
     private static List<Analytic> analytics = new ArrayList<>();
-    private static AnalyticsStorage storage = new AnalyticsStorageJSON();
+    private static AnalyticsStorage storage = new AnalyticsStorageMapDB();
 
     private Sensor sensor;
     private Aggregates aggregate;
@@ -78,6 +79,18 @@ public class Analytic implements SensorObserver {
 
     public TimeRange getTimeRange() {
         return timeRange;
+    }
+
+    public String getCurrentDescription() {
+        return this.getSensor().getName() + "_" +
+                this.getAggregate().getDescription() + "_" +
+                this.getTimeRange().getCurrentTimeString();
+    }
+
+    public String toString() {
+        return this.getSensor().getName() + "_" +
+                this.getAggregate().getDescription() + "_" +
+                this.getTimeRange().getDescription();
     }
 
     @Override
