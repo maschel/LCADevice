@@ -35,15 +35,17 @@
 
 package com.maschel.lca.analytics.storage;
 
-import com.maschel.lca.analytics.Analytic;
+public class AnalyticsSensorData {
 
-import java.util.List;
+    private String name;
+    private String aggregate;
+    private String date;
+    private Object value;
 
-public interface AnalyticsStorage {
-
-    void store(Analytic analytic);
-
-    List<AnalyticsSensorData> getCurrentData(Boolean purgeData);
-
-    void close();
+    public AnalyticsSensorData(String name, String aggregate, String date, Object value) {
+        this.name = name;
+        this.aggregate = aggregate;
+        this.date = date;
+        this.value = value;
+    }
 }

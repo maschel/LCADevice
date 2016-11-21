@@ -5,7 +5,7 @@ MTPs-Main-Container.txt
 
 ### Analytics Database ###
 analytics.json
-analytics.db
+analytics.db*
 
 ### IntelliJ ###
 

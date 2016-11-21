@@ -35,6 +35,8 @@
 
 package com.maschel.lca.analytics;
 
+import com.maschel.lca.agent.message.DTO.AnalyticsSensorDataDTO;
+import com.maschel.lca.analytics.storage.AnalyticsSensorData;
 import com.maschel.lca.analytics.storage.AnalyticsStorage;
 import com.maschel.lca.analytics.storage.AnalyticsStorageMapDB;
 import com.maschel.lca.device.sensor.Sensor;
@@ -59,6 +61,10 @@ public class Analytic implements SensorObserver, Serializable {
 
     public static List<Analytic> getAnalytics() {
         return analytics;
+    }
+
+    public static List<AnalyticsSensorData> getAnalyticsSensorData(Boolean purgeData) {
+        return storage.getCurrentData(purgeData);
     }
 
     public Analytic(Sensor sensor, Aggregates aggregate, TimeRange timeRange) {

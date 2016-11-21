@@ -36,10 +36,13 @@
 package com.maschel.lca.analytics.storage;
 
 import com.maschel.lca.analytics.Analytic;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
+import org.mapdb.*;
+import org.mapdb.serializer.SerializerArray;
+import org.mapdb.serializer.SerializerArrayTuple;
 
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
@@ -48,14 +51,21 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
     DB db = null;
 
-    ConcurrentMap analyticsMap = null;
+    private HTreeMap<Object[], Object> analyticsMap = null;
+
+    private final int COMMIT_INTERVAL = 1000;
+    private long lastCommitMillis = 0;
 
     private void openDatabase() {
         if (db == null) {
             db = DBMaker.fileDB(DATABASE_FILE)
+                    .fileMmapEnableIfSupported()
+                    .transactionEnable()
                     .closeOnJvmShutdown()
                     .make();
-            analyticsMap = db.hashMap(ANALYTICS_MAP).createOrOpen();
+            analyticsMap = db.hashMap(ANALYTICS_MAP)
+                    .keySerializer(new SerializerArray(Serializer.STRING)).valueSerializer(Serializer.JAVA)
+                    .createOrOpen();
         }
     }
 
@@ -64,7 +74,12 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
         openDatabase();
 
-        String currentKey = analytic.getCurrentDescription();
+        Object[] currentKey = new String[]{
+                analytic.getSensor().getName(),
+                analytic.getAggregate().getDescription(),
+                analytic.getTimeRange().getCurrentTimeString()
+        };
+
         if(!analyticsMap.containsKey(currentKey)) {
             analyticsMap.put(currentKey, analytic.getAggregate().getDefaultValue());
         }
@@ -72,7 +87,37 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
         Object currentValue = analyticsMap.get(currentKey);
         analyticsMap.put(currentKey, analytic.getAggregate().calculate(currentValue, analytic.getSensor().getValue()));
 
-        System.out.println(currentKey + " -> " + analyticsMap.get(currentKey));
+        commit();
+    }
+
+    @Override
+    public List<AnalyticsSensorData> getCurrentData(Boolean purgeData) {
+
+        openDatabase();
+
+        Set<Map.Entry<Object[], Object>> currentSet = analyticsMap.getEntries();
+        if (purgeData) {
+            analyticsMap.clear();
+            db.commit();
+        }
+
+        List<AnalyticsSensorData> data = new ArrayList<>();
+        for (Map.Entry<Object[], Object> entry: currentSet) {
+            data.add(new AnalyticsSensorData(
+                    (String)entry.getKey()[0],
+                    (String)entry.getKey()[1],
+                    (String)entry.getKey()[2],
+                    entry.getValue()
+            ));
+        }
+        return data;
+    }
+
+    private void commit() {
+        if (lastCommitMillis == 0L || ((System.currentTimeMillis() - lastCommitMillis) > COMMIT_INTERVAL)) {
+            lastCommitMillis = System.currentTimeMillis();
+            db.commit();
+        }
     }
 
     @Override
