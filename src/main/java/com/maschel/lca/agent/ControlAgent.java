@@ -36,6 +36,7 @@
 package com.maschel.lca.agent;
 
 import com.maschel.lca.agent.message.Json;
+import com.maschel.lca.analytics.Analytic;
 import com.maschel.lca.device.Device;
 import com.maschel.lca.device.sensor.Sensor;
 import com.maschel.lca.device.actuator.Actuator;
@@ -100,7 +101,7 @@ public class ControlAgent extends Agent {
             });
         }
 
-        addBehaviour(new MessagePerformer());
+        addBehaviour(new MessagePerformer(this));
 
     }
 
@@ -112,6 +113,10 @@ public class ControlAgent extends Agent {
         private static final String SENSOR_ONTOLOGY = "sensor";
         private static final String SENSOR_LIST_ONTOLOGY = "sensorlist";
         private static final String ACTUATOR_ONTOLOGY = "actuator";
+
+        public MessagePerformer(Agent a) {
+            super(a);
+        }
 
         @Override
         public void action() {
@@ -252,6 +257,7 @@ public class ControlAgent extends Agent {
 
     protected void takeDown() {
         agentDevice.disconnect();
+        Analytic.closeStorage();
     }
 
     private Device loadDeviceClass(String agentDeviceClassName) throws Exception {

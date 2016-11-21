@@ -93,6 +93,10 @@ public class Analytic implements SensorObserver, Serializable {
                 this.getTimeRange().getDescription();
     }
 
+    public static void closeStorage() {
+        storage.close();
+    }
+
     @Override
     public void sensorUpdateNotification() {
         storage.store(this);

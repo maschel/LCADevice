@@ -33,54 +33,53 @@
  *
  */
 
-package com.maschel.lca.analytics.storage;
+package com.maschel.lca;
 
+import com.maschel.lca.analytics.AggregateOperator;
 import com.maschel.lca.analytics.Analytic;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
+import com.maschel.lca.analytics.TimeRange;
+import com.maschel.lca.device.Device;
+import com.maschel.lca.device.sensor.Sensor;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Random;
 
-public class AnalyticsStorageMapDB implements AnalyticsStorage {
+public class TestDevice extends Device {
 
-    private static String DATABASE_FILE = "analytics.db";
-    private static String ANALYTICS_MAP = "analytics";
 
-    DB db = null;
-
-    ConcurrentMap analyticsMap = null;
-
-    private void openDatabase() {
-        if (db == null) {
-            db = DBMaker.fileDB(DATABASE_FILE)
-                    .closeOnJvmShutdown()
-                    .make();
-            analyticsMap = db.hashMap(ANALYTICS_MAP).createOrOpen();
-        }
+    public TestDevice() {
+        super("TestDevice", 50);
     }
 
     @Override
-    public void store(Analytic analytic) {
+    public void setup() {
 
-        openDatabase();
+        Sensor testSensor = new Sensor("TestSensor") {
+            @Override
+            public Double readSensor() {
+                double start = 0;
+                double end = 100;
+                double random = new Random().nextDouble();
+                return start + (random * (end - start));
+            }
+        };
 
-        String currentKey = analytic.getCurrentDescription();
-        if(!analyticsMap.containsKey(currentKey)) {
-            analyticsMap.put(currentKey, analytic.getAggregate().getDefaultValue());
-        }
+        this.addDeviceSensor(testSensor);
 
-        Object currentValue = analyticsMap.get(currentKey);
-        analyticsMap.put(currentKey, analytic.getAggregate().calculate(currentValue, analytic.getSensor().getValue()));
+        Analytic.registerAnalytic(new Analytic(testSensor, AggregateOperator.DOUBLE_TOTAL, TimeRange.MINUTE));
 
-        System.out.println(currentKey + " -> " + analyticsMap.get(currentKey));
     }
 
     @Override
-    public void close() {
-        if(db != null && !db.isClosed()) {
-            db.close();
-            analyticsMap = null;
-            db = null;
-        }
+    public void connect() {
+
+    }
+
+    @Override
+    public void update() {
+
+    }
+
+    @Override
+    public void disconnect() {
     }
 }

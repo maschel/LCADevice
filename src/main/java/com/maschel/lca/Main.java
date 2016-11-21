@@ -33,39 +33,20 @@
  *
  */
 
-package com.maschel.lca.analytics;
+package com.maschel.lca;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.maschel.lca.analytics.DTO.AnalyticsDTO;
 
-public enum TimeRange {
+public class Main {
 
-    YEAR("year", "yyyy"),
-    MONTH("month", "yyyy-M"),
-    DAY("day", "yyyy-M-d"),
-    HOUR("hour", "yyyy-M-d-H"),
-    MINUTE("minute", "yyyy-M-d-H-m"),
-    SECOND("second", "yyyy-M-d-H-m-s");
+    public static void main(String[] args) {
+        AnalyticsDTO analyticsDTO = new AnalyticsDTO("TestDevice");
+        analyticsDTO.addAnalytic("TestSensor_total_2016-11-18-12-20", "test");
 
-    private final String description;
-    private final String timeComponents;
-
-    TimeRange(String description, String timeComponents) {
-        this.description = description;
-        this.timeComponents = timeComponents;
-    }
-
-    public String getCurrentTimeString() {
-        Date now = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat(timeComponents);
-        return formatter.format(now);
-    }
-
-    public String getTimeComponents() {
-        return timeComponents;
-    }
-
-    public String getDescription() {
-        return description;
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(analyticsDTO);
+        System.out.println(json);
     }
 }
