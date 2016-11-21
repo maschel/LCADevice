@@ -49,33 +49,29 @@ public class AggregateCounter<T, U, R> implements Aggregates<T, U, R> {
         this.defaultValue = defaultValue;
     }
 
-    public static AggregateCounter<Integer, Integer, Integer> INTEGER_HIGHER_THEN(Integer condition) {
+    public static AggregateCounter<Integer, Integer, Integer> HIGHER_THEN(Integer condition) {
         return new AggregateCounter<>("higher-then", condition,
                 (counter, value) -> value > condition ? ++counter : counter, 0);
     }
-    public static AggregateCounter<Integer, Integer, Integer> INTEGER_LOWER_THEN(Integer condition) {
+    public static AggregateCounter<Integer, Integer, Integer> LOWER_THEN(Integer condition) {
         return new AggregateCounter<>("lower-then", condition,
                 (counter, value) -> value < condition ? ++counter : counter, 0);
     }
-    public static AggregateCounter<Integer, Double, Integer> DOUBLE_HIGHER_THEN(Double condition) {
+    public static AggregateCounter<Integer, Double, Integer> HIGHER_THEN(Double condition) {
         return new AggregateCounter<>("higher-then", condition.toString() + ")",
                 (counter, value) -> value > condition ? ++counter : counter, 0);
     }
-    public static AggregateCounter<Integer, Double, Integer> DOUBLE_LOWER_THEN(Double condition) {
+    public static AggregateCounter<Integer, Double, Integer> LOWER_THEN(Double condition) {
         return new AggregateCounter<>("lower-then", condition,
                 (counter, value) -> value < condition ? ++counter : counter, 0);
     }
-    public static AggregateCounter<Integer, String, Integer> STRING_EQUAL(String condition) {
+    public static AggregateCounter<Integer, String, Integer> EQUAL(String condition) {
         return new AggregateCounter<>("string-equal", condition,
                 (counter, value) -> value.equals(condition) ? ++counter : counter, 0);
     }
-    public static AggregateCounter<Integer, Boolean, Integer> BOOLEAN_TRUE(Boolean condition) {
+    public static AggregateCounter<Integer, Boolean, Integer> BOOLEAN(Boolean condition) {
         return new AggregateCounter<>("is-true", condition,
-                (counter, value) -> value ? ++counter : counter, 0);
-    }
-    public static AggregateCounter<Integer, Boolean, Integer> BOOLEAN_FALSE(Boolean condition) {
-        return new AggregateCounter<>("is-false", condition,
-                (counter, value) -> !value ? ++counter : counter, 0);
+                (counter, value) -> value==condition ? ++counter : counter, 0);
     }
 
     @Override

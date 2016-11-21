@@ -39,18 +39,28 @@ import java.util.function.BiFunction;
 
 public class AggregateOperator<T, U, R> implements Aggregates<T, U, R> {
 
-    public static AggregateOperator<Integer, Integer, Integer> INTEGER_TOTAL =
-            new AggregateOperator<>("total", (oldValue, addValue) -> oldValue + addValue, 0);
-    public static AggregateOperator<Double, Double, Double> DOUBLE_TOTAL =
-            new AggregateOperator<>("total", (oldValue, addValue) -> oldValue + addValue, 0.0);
-    public static AggregateOperator<Integer, Integer, Integer> INTEGER_MAX =
-            new AggregateOperator<>("max", (oldValue, newValue) -> oldValue > newValue ? oldValue:newValue, 0);
-    public static AggregateOperator<Double, Double, Double> DOUBLE_MAX =
-            new AggregateOperator<>("max", (oldValue, newValue) -> oldValue > newValue ? oldValue:newValue, 0.0);
-    public static AggregateOperator<Integer, Integer, Integer> INTEGER_MIN =
-            new AggregateOperator<>("min", (oldValue, newValue) -> oldValue < newValue ? oldValue:newValue, 0);
-    public static AggregateOperator<Double, Double, Double> DOUBLE_MIN =
-            new AggregateOperator<>("min", (oldValue, newValue) -> oldValue < newValue ? oldValue:newValue, 0.0);
+    public static AggregateOperator<Integer, Integer, Integer> TOTAL(Integer defaultValue) {
+        return new AggregateOperator<>("total", (oldValue, addValue) -> oldValue + addValue, defaultValue);
+    }
+    public static AggregateOperator<Double, Double, Double> TOTAL(Double defaultValue) {
+        return new AggregateOperator<>("total", (oldValue, addValue) -> oldValue + addValue, defaultValue);
+    }
+    public static AggregateOperator<Integer, Integer, Integer> MAX(Integer defaultValue) {
+        return new AggregateOperator<>("max", (oldValue, newValue) -> oldValue > newValue ? oldValue:newValue,
+                defaultValue);
+    }
+    public static AggregateOperator<Double, Double, Double> MAX(Double defaultValue) {
+        return new AggregateOperator<>("max", (oldValue, newValue) -> oldValue > newValue ? oldValue:newValue,
+                defaultValue);
+    }
+    public static AggregateOperator<Integer, Integer, Integer> MIN(Integer defaultValue) {
+        return new AggregateOperator<>("min", (oldValue, newValue) -> oldValue < newValue ? oldValue:newValue,
+                defaultValue);
+    }
+    public static AggregateOperator<Double, Double, Double> MIN(Double defaultValue) {
+        return new AggregateOperator<>("min", (oldValue, newValue) -> oldValue < newValue ? oldValue:newValue,
+                defaultValue);
+    }
 
     private String description;
     private BiFunction<T, U, R> operator;
