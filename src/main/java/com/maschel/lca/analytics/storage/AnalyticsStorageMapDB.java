@@ -101,16 +101,12 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
             db.commit();
         }
 
-        List<AnalyticsSensorData> data = new ArrayList<>();
-        for (Map.Entry<Object[], Object> entry: currentSet) {
-            data.add(new AnalyticsSensorData(
-                    (String)entry.getKey()[0],
-                    (String)entry.getKey()[1],
-                    (String)entry.getKey()[2],
-                    entry.getValue()
-            ));
-        }
-        return data;
+        return currentSet.stream().map(entry -> new AnalyticsSensorData(
+                (String) entry.getKey()[0],
+                (String) entry.getKey()[1],
+                (String) entry.getKey()[2],
+                entry.getValue()
+        )).collect(Collectors.toList());
     }
 
     private void commit() {
