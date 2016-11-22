@@ -35,40 +35,14 @@
 
 package com.maschel.lca.agent.message;
 
-import com.maschel.lca.device.sensor.Sensor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.maschel.lca.agent.message.DTO.SensorDTO;
 
-import java.util.List;
+public class SensorValueMessage {
+    private String deviceId;
+    private SensorDTO sensor;
 
-/**
- * Converters for JSON to domain objects (Sensor, Actuator, etc.)
- */
-public class Json {
-
-    /**
-     * Converts a sensor object to JSONObject.
-     * @param sensor The sensor.
-     * @return JSON representation of Sensor.
-     */
-    public static JSONObject sensorToJSON(Sensor sensor) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", sensor.getName());
-        jsonObject.put("type", sensor.getType().getCanonicalName());
-        jsonObject.put("value", sensor.getValue());
-        return jsonObject;
-    }
-
-    /**
-     * Converts a List of Sensors to a JSONArray.
-     * @param sensors The sensor list.
-     * @return JSONArray representation of Sensor.
-     */
-    public static JSONArray sensorArrayToJSON(List<Sensor> sensors) {
-        JSONArray array = new JSONArray();
-        for (Sensor s : sensors) {
-            array.add(sensorToJSON(s));
-        }
-        return array;
+    public SensorValueMessage(String deviceId, SensorDTO sensor) {
+        this.deviceId = deviceId;
+        this.sensor = sensor;
     }
 }

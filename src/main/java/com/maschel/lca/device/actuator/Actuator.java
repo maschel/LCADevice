@@ -90,15 +90,6 @@ public abstract class Actuator<T> {
                 return null;
             }
 
-            // Argument of type Argument.class
-            T argument = argumentClass.newInstance();
-            if (Argument.class.isAssignableFrom(argument.getClass())) {
-                Argument argInstance = (Argument) argument;
-                argInstance.parseRawArguments(args);
-                argument = (T) argInstance;
-                return argument;
-            }
-
             // JAVA composite type
             if (argumentClass == Double.class || argumentClass == Float.class ||
                     argumentClass == Long.class || argumentClass == Integer.class ||
@@ -108,6 +99,15 @@ public abstract class Actuator<T> {
                 if (args.size() > 0) {
                     return (T) args.get(0);
                 }
+            }
+
+            // Argument of type Argument.class
+            T argument = argumentClass.newInstance();
+            if (Argument.class.isAssignableFrom(argument.getClass())) {
+                Argument argInstance = (Argument) argument;
+                argInstance.parseRawArguments(args);
+                argument = (T) argInstance;
+                return argument;
             }
 
             throw new Exception("Actuator argument type not matching any expected types");
