@@ -33,9 +33,8 @@
  *
  */
 
-package com.maschel.lca.agent.message.Mapper;
+package com.maschel.lca.agent.message.mapper;
 
-import com.maschel.lca.agent.message.DTO.AnalyticsSensorDataDTO;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 

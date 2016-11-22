@@ -106,7 +106,7 @@ public abstract class Sensor<T> implements ObservableSensor {
      * Get the name of the sensor
      * @return sensor name
      */
-    final public String getName() {
+    public String getName() {
         return this.name;
     }
 
@@ -114,7 +114,7 @@ public abstract class Sensor<T> implements ObservableSensor {
      * Get the current value of the sensor (instance)
      * @return sensor value
      */
-    final public T getValue() {
+    public T getValue() {
         this.update();
         return this.value;
     }
@@ -123,8 +123,8 @@ public abstract class Sensor<T> implements ObservableSensor {
      * Get the type of the sensor value
      * @return Class of sensor value
      */
-    final public Class<?> getType() {
-        return getValue().getClass();
+    public String getType() {
+        return getValue().getClass().getCanonicalName();
     }
 
     /**

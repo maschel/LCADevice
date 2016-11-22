@@ -33,35 +33,14 @@
  *
  */
 
-package com.maschel.lca.agent.message.mapper;
+package com.maschel.lca.agent.message.request;
 
-import com.maschel.lca.agent.message.DTO.SensorDTO;
-import com.maschel.lca.device.sensor.Sensor;
-import org.modelmapper.PropertyMap;
+public class SensorRequestMessage {
+    public String sensor;
 
-public class SensorMapper extends Mapper<Sensor, SensorDTO> {
+    public SensorRequestMessage() {}
 
-    PropertyMap<Sensor, SensorDTO> sensorMap = new PropertyMap<Sensor, SensorDTO>() {
-        @Override
-        protected void configure() {
-            map().setName(source.getName());
-            map().setType(source.getType());
-            map().setValue(source.getValue());
-        }
-    };
-
-    public SensorMapper() {
-        super();
-        modelMapper.addMappings(sensorMap);
-    }
-
-    @Override
-    public Sensor DtoToObject(SensorDTO sensorDTO) {
-        return modelMapper.map(sensorDTO, Sensor.class);
-    }
-
-    @Override
-    public SensorDTO ObjectToDto(Sensor sensor) {
-        return modelMapper.map(sensor, SensorDTO.class);
+    public SensorRequestMessage(String sensor) {
+        this.sensor = sensor;
     }
 }

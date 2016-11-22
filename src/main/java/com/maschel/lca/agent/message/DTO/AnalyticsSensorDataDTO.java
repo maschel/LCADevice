@@ -41,6 +41,8 @@ public class AnalyticsSensorDataDTO {
     private String date;
     private Object value;
 
+    public AnalyticsSensorDataDTO() {}
+
     public AnalyticsSensorDataDTO(String name, String aggregate, String date, Object value) {
         this.name = name;
         this.aggregate = aggregate;

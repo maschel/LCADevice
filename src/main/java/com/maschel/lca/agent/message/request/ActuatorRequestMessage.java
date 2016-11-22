@@ -35,6 +35,16 @@
 
 package com.maschel.lca.agent.message.request;
 
-public class ActuatorMessage {
-    
+import java.util.List;
+
+public class ActuatorRequestMessage {
+    public String actuator;
+    public List<Object> arguments;
+
+    public ActuatorRequestMessage() {}
+
+    public ActuatorRequestMessage(String actuator, List<Object> arguments) {
+        this.actuator = actuator;
+        this.arguments = arguments;
+    }
 }

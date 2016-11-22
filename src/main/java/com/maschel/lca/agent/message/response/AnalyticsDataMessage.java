@@ -33,7 +33,7 @@
  *
  */
 
-package com.maschel.lca.agent.message;
+package com.maschel.lca.agent.message.response;
 
 import com.maschel.lca.agent.message.DTO.AnalyticsSensorDataDTO;
 

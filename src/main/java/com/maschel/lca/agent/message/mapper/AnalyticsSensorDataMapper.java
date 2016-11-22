@@ -33,14 +33,10 @@
  *
  */
 
-package com.maschel.lca.agent.message.Mapper;
+package com.maschel.lca.agent.message.mapper;
 
 import com.maschel.lca.agent.message.DTO.AnalyticsSensorDataDTO;
 import com.maschel.lca.analytics.storage.AnalyticsSensorData;
-import org.modelmapper.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.List;
 
 public class AnalyticsSensorDataMapper extends Mapper<AnalyticsSensorData, AnalyticsSensorDataDTO> {
     @Override

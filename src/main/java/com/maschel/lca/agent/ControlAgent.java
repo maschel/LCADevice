@@ -35,7 +35,12 @@
 
 package com.maschel.lca.agent;
 
-import com.maschel.lca.agent.message.Json;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.maschel.lca.agent.message.mapper.SensorMapper;
+import com.maschel.lca.agent.message.request.ActuatorRequestMessage;
+import com.maschel.lca.agent.message.request.SensorRequestMessage;
+import com.maschel.lca.agent.message.response.SensorValueMessage;
 import com.maschel.lca.analytics.Analytic;
 import com.maschel.lca.device.Device;
 import com.maschel.lca.device.sensor.Sensor;
@@ -46,10 +51,6 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * ControlAgent class
@@ -67,6 +68,8 @@ import org.json.simple.parser.ParseException;
 public class ControlAgent extends Agent {
 
     private Device agentDevice;
+
+    private Gson gson = new Gson();
 
     /**
      * Setup the agent platform and setup the device.
@@ -111,7 +114,6 @@ public class ControlAgent extends Agent {
      */
     private class MessagePerformer extends CyclicBehaviour {
         private static final String SENSOR_ONTOLOGY = "sensor";
-        private static final String SENSOR_LIST_ONTOLOGY = "sensorlist";
         private static final String ACTUATOR_ONTOLOGY = "actuator";
 
         public MessagePerformer(Agent a) {
@@ -126,9 +128,6 @@ public class ControlAgent extends Agent {
                 switch (msg.getOntology()) {
                     case SENSOR_ONTOLOGY:
                         myAgent.addBehaviour(new SensorBehaviour(msg));
-                        break;
-                    case SENSOR_LIST_ONTOLOGY:
-                        myAgent.addBehaviour(new SensorListBehaviour(msg));
                         break;
                     case ACTUATOR_ONTOLOGY:
                         myAgent.addBehaviour(new ActuatorBehaviour(msg));
@@ -145,6 +144,8 @@ public class ControlAgent extends Agent {
      */
     private class SensorBehaviour extends OneShotBehaviour {
 
+        private SensorMapper sensorMapper = new SensorMapper();
+
         private ACLMessage message;
 
         public SensorBehaviour(ACLMessage msg) {
@@ -153,33 +154,38 @@ public class ControlAgent extends Agent {
 
         @Override
         public void action() {
-            String sensorName = message.getContent();
-            Sensor sensor = agentDevice.getSensorByName(sensorName);
-            if (sensor != null) {
-                ACLMessage reply = message.createReply();
-                reply.setPerformative(ACLMessage.INFORM);
-                reply.setContent(Json.sensorToJSON(sensor).toJSONString());
-                myAgent.send(reply);
+
+            SensorRequestMessage sensorRequestMessage;
+            try {
+                sensorRequestMessage = gson.fromJson(
+                        message.getContent(),
+                        SensorRequestMessage.class
+                );
+            } catch (JsonSyntaxException ex) {
+                sendFailureReply(message, "Invalid JSON syntax");
+                return;
             }
-        }
-    }
 
-    /**
-     * SensorListBehaviour, is called on a sensorList request message
-     */
-    private class SensorListBehaviour extends OneShotBehaviour {
+            if (sensorRequestMessage.sensor == null || sensorRequestMessage.equals("")) {
+                sendFailureReply(message, "Invalid sensor");
+                return;
+            }
 
-        private ACLMessage message;
+            Sensor sensor = agentDevice.getSensorByName(sensorRequestMessage.sensor);
+            if (sensor == null) {
+                sendFailureReply(message, "Sensor not found");
+                return;
+            }
 
-        public SensorListBehaviour(ACLMessage msg) {
-            this.message = msg;
-        }
-
-        @Override
-        public void action() {
             ACLMessage reply = message.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(Json.sensorArrayToJSON(agentDevice.getSensors()).toJSONString());
+
+            SensorValueMessage message = new SensorValueMessage(
+                    agentDevice.getId(),
+                    sensorMapper.ObjectToDto(sensor)
+            );
+            reply.setContent(gson.toJson(message));
+
             myAgent.send(reply);
         }
     }
@@ -188,8 +194,6 @@ public class ControlAgent extends Agent {
      * ActuatorBehaviour, is called on a actuator command message
      */
     private class ActuatorBehaviour extends OneShotBehaviour {
-
-        private static final String JSON_ENCODING = "json";
 
         private ACLMessage message;
 
@@ -200,59 +204,50 @@ public class ControlAgent extends Agent {
         @Override
         public void action() {
 
-            if (message.getEncoding() == null || !message.getEncoding().equals(JSON_ENCODING)) {
-                sendFailureReply("Invalid encoding");
-                return;
-            }
-
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObject;
+            ActuatorRequestMessage actuateMessage;
             try {
-                jsonObject = (JSONObject)jsonParser.parse(message.getContent());
-            } catch(ParseException pe) {
-                sendFailureReply("Failed to parse JSON message");
+                actuateMessage = gson.fromJson(
+                        message.getContent(),
+                        ActuatorRequestMessage.class
+                );
+            } catch (JsonSyntaxException ex) {
+                sendFailureReply(message, "Invalid JSON syntax");
                 return;
             }
 
-            String actuatorName = jsonObject.get("name").toString();
-            if (actuatorName == null) {
-                sendFailureReply("No actuator name specified");
+            if (actuateMessage.actuator == null || actuateMessage.actuator.equals("")) {
+                sendFailureReply(message, "No actuator name specified");
                 return;
             }
 
-            Actuator actuator = agentDevice.getActuatorByName(actuatorName);
+            Actuator actuator = agentDevice.getActuatorByName(actuateMessage.actuator);
             if (actuator == null) {
-                sendFailureReply("Could not find actuator: " + actuatorName);
+                sendFailureReply(message, "Could not find actuator: " + actuateMessage.actuator);
                 return;
-            }
-
-            JSONArray jsonArguments = (JSONArray)jsonObject.get("arguments");
-            if (jsonArguments == null) {
-                sendFailureReply("No arguments found");
             }
 
             try {
-                actuator.actuate(actuator.getParsedArgumentInstance(jsonArguments));
+                actuator.actuate(actuator.getParsedArgumentInstance(actuateMessage.arguments));
             } catch (Exception e) {
-                sendFailureReply("Failed to actuate: " + e.getMessage());
+                sendFailureReply(message, "Failed to actuate: " + e.getMessage());
                 return;
             }
 
-            sendSuccessReply();
+            sendSuccessReply(message);
         }
+    }
 
-        private void sendSuccessReply() {
-            ACLMessage reply = message.createReply();
-            reply.setPerformative(ACLMessage.AGREE);
-            myAgent.send(reply);
-        }
+    private void sendFailureReply(ACLMessage msg, String reason) {
+        ACLMessage reply = msg.createReply();
+        reply.setPerformative(ACLMessage.FAILURE);
+        reply.setContent(reason);
+        this.send(reply);
+    }
 
-        private void sendFailureReply(String reason) {
-            ACLMessage reply = message.createReply();
-            reply.setPerformative(ACLMessage.FAILURE);
-            reply.setContent(reason);
-            myAgent.send(reply);
-        }
+    private void sendSuccessReply(ACLMessage msg) {
+        ACLMessage reply = msg.createReply();
+        reply.setPerformative(ACLMessage.AGREE);
+        this.send(reply);
     }
 
     protected void takeDown() {
