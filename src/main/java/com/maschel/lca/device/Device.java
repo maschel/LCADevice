@@ -35,6 +35,7 @@
 
 package com.maschel.lca.device;
 
+import com.maschel.lca.analytics.AnalyticService;
 import com.maschel.lca.device.actuator.Actuator;
 import com.maschel.lca.device.sensor.Sensor;
 
@@ -57,21 +58,24 @@ import java.util.List;
  */
 public abstract class Device {
 
-    public static String deviceId = "";
+    private final String deviceId;
 
     private final int sensorUpdateInterval;
     private Component rootComponent;
 
+    private AnalyticService analyticService;
+
     /**
      * Default Device constructor
      * This should be called using super(id, sensorUpdateInterval) in any device implementation.
-     * @param id The device id
+     * @param deviceId The device id
      * @param sensorUpdateInterval The interval at which sensors should be updated.
      */
-    public Device(String id, int sensorUpdateInterval) {
-        deviceId = id;
+    public Device(String deviceId, int sensorUpdateInterval) {
+        this.deviceId = deviceId;
         this.sensorUpdateInterval = sensorUpdateInterval;
-        this.rootComponent = new Component(id);
+        this.rootComponent = new Component(deviceId);
+        this.analyticService = new AnalyticService(deviceId);
     }
 
     /**
@@ -148,6 +152,10 @@ public abstract class Device {
      */
     final public int getSensorUpdateInterval() {
         return sensorUpdateInterval;
+    }
+
+    public final AnalyticService getAnalyticService() {
+        return analyticService;
     }
 
     /**

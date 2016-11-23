@@ -252,7 +252,7 @@ public class ControlAgent extends Agent {
 
     protected void takeDown() {
         agentDevice.disconnect();
-        Analytic.closeStorage();
+        agentDevice.getAnalyticService().closeStorage();
     }
 
     private Device loadDeviceClass(String agentDeviceClassName) throws Exception {

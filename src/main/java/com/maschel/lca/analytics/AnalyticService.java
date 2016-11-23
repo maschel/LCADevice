@@ -35,58 +35,37 @@
 
 package com.maschel.lca.analytics;
 
+import com.maschel.lca.analytics.storage.AnalyticsSensorData;
 import com.maschel.lca.analytics.storage.AnalyticsStorage;
-import com.maschel.lca.device.sensor.Sensor;
-import com.maschel.lca.device.sensor.SensorObserver;
+import com.maschel.lca.analytics.storage.AnalyticsStorageMapDB;
+import com.maschel.lca.device.Device;
 
-public class Analytic implements SensorObserver {
+import java.util.ArrayList;
+import java.util.List;
 
-    private Sensor sensor;
-    private Aggregates aggregate;
-    private TimeRange timeRange;
+public class AnalyticService {
 
+    private List<Analytic> analytics = new ArrayList<>();
     private AnalyticsStorage storage;
 
-    public Analytic(Sensor sensor, Aggregates aggregate, TimeRange timeRange) {
-        this.sensor = sensor;
-        sensor.registerObserver(this);
-
-        this.aggregate = aggregate;
-        this.timeRange = timeRange;
+    public AnalyticService(String deviceId) {
+        this.storage = new AnalyticsStorageMapDB(deviceId);
     }
 
-    public Sensor getSensor() {
-        return sensor;
+    public void registerAnalytic(Analytic analytic) {
+        analytic.setStorage(this.storage);
+        analytics.add(analytic);
     }
 
-    public Aggregates getAggregate() {
-        return aggregate;
+    public List<Analytic> getAnalytics() {
+        return analytics;
     }
 
-    public TimeRange getTimeRange() {
-        return timeRange;
+    public List<AnalyticsSensorData> getAnalyticsSensorData(Boolean purgeData) {
+        return storage.getCurrentData(purgeData);
     }
 
-    public void setStorage(AnalyticsStorage storage) {
-        this.storage = storage;
-    }
-
-    public String getCurrentDescription() {
-        return this.getSensor().getName() + "_" +
-                this.getAggregate().getDescription() + "_" +
-                this.getTimeRange().getCurrentTimeString();
-    }
-
-    public String toString() {
-        return this.getSensor().getName() + "_" +
-                this.getAggregate().getDescription() + "_" +
-                this.getTimeRange().getDescription();
-    }
-
-    @Override
-    public void sensorUpdateNotification() {
-        if (storage != null) {
-            storage.store(this);
-        }
+    public void closeStorage() {
+        storage.close();
     }
 }

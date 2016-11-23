@@ -38,32 +38,38 @@ package com.maschel.lca.analytics.storage;
 import com.maschel.lca.analytics.Analytic;
 import org.mapdb.*;
 import org.mapdb.serializer.SerializerArray;
-import org.mapdb.serializer.SerializerArrayTuple;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
-    private static String DATABASE_FILE = "analytics.db";
-    private static String ANALYTICS_MAP = "analytics";
+    private static DB db = null;
+    private static String database_file = "analytics.db";
+    private static int connections = 0;
 
-    DB db = null;
+    private static final int COMMIT_INTERVAL = 1000;
+    private static long lastCommitMillis = 0;
 
+    private String analytics_map_name;
     private HTreeMap<Object[], Object> analyticsMap = null;
 
-    private final int COMMIT_INTERVAL = 1000;
-    private long lastCommitMillis = 0;
+    public AnalyticsStorageMapDB(String deviceId) {
+        analytics_map_name = "analytics" + deviceId;
+
+        connections++;
+    }
 
     private void openDatabase() {
         if (db == null) {
-            db = DBMaker.fileDB(DATABASE_FILE)
+            db = DBMaker.fileDB(database_file)
                     .fileMmapEnableIfSupported()
                     .transactionEnable()
                     .closeOnJvmShutdown()
                     .make();
-            analyticsMap = db.hashMap(ANALYTICS_MAP)
+        }
+        if (analyticsMap == null) {
+            analyticsMap = db.hashMap(analytics_map_name)
                     .keySerializer(new SerializerArray(Serializer.STRING)).valueSerializer(Serializer.JAVA)
                     .createOrOpen();
         }
@@ -109,7 +115,7 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
         )).collect(Collectors.toList());
     }
 
-    private void commit() {
+    private static void commit() {
         if (lastCommitMillis == 0L || ((System.currentTimeMillis() - lastCommitMillis) > COMMIT_INTERVAL)) {
             lastCommitMillis = System.currentTimeMillis();
             db.commit();
@@ -118,9 +124,11 @@ public class AnalyticsStorageMapDB implements AnalyticsStorage {
 
     @Override
     public void close() {
-        if(db != null && !db.isClosed()) {
+        connections--;
+        analyticsMap = null;
+
+        if(connections == 0 && db != null && !db.isClosed()) {
             db.close();
-            analyticsMap = null;
             db = null;
         }
     }
