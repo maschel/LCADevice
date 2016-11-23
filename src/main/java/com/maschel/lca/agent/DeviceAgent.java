@@ -35,19 +35,11 @@
 
 package com.maschel.lca.agent;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.maschel.lca.agent.message.mapper.SensorMapper;
-import com.maschel.lca.agent.message.request.ActuatorRequestMessage;
-import com.maschel.lca.agent.message.request.SensorRequestMessage;
-import com.maschel.lca.agent.message.response.SensorValueMessage;
-import com.maschel.lca.analytics.Analytic;
+import com.maschel.lca.agent.behaviour.ActuatorBehaviour;
+import com.maschel.lca.agent.behaviour.SensorBehaviour;
 import com.maschel.lca.device.Device;
-import com.maschel.lca.device.sensor.Sensor;
-import com.maschel.lca.device.actuator.Actuator;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -65,11 +57,9 @@ import jade.lang.acl.MessageTemplate;
  *     <li>Disconnect</li>
  * </ul>
  */
-public class ControlAgent extends Agent {
+public class DeviceAgent extends Agent {
 
     private Device agentDevice;
-
-    private Gson gson = new Gson();
 
     /**
      * Setup the agent platform and setup the device.
@@ -87,11 +77,13 @@ public class ControlAgent extends Agent {
                 agentDevice.connect();
             } catch (Exception e) {
                 System.out.println("ERROR: " + e.getMessage());
-                System.exit(1);
+                this.doDelete();
+                return;
             }
         } else {
-            System.out.println("ERROR: No device class provided to ControlAgent");
-            System.exit(1);
+            System.out.println("ERROR: No device class provided to DeviceAgent");
+            this.doDelete();
+            return;
         }
 
         if (agentDevice.getSensorUpdateInterval() != 0) {
@@ -127,10 +119,12 @@ public class ControlAgent extends Agent {
             if (msg != null) {
                 switch (msg.getOntology()) {
                     case SENSOR_ONTOLOGY:
-                        myAgent.addBehaviour(new SensorBehaviour(msg));
+                         // SensorBehaviour, is called on a sensor request message
+                        myAgent.addBehaviour(new SensorBehaviour(myAgent, agentDevice, msg));
                         break;
                     case ACTUATOR_ONTOLOGY:
-                        myAgent.addBehaviour(new ActuatorBehaviour(msg));
+                        // ActuatorBehaviour, is called on a actuator command message
+                        myAgent.addBehaviour(new ActuatorBehaviour(myAgent, agentDevice, msg));
                         break;
                 }
             } else {
@@ -139,120 +133,11 @@ public class ControlAgent extends Agent {
         }
     }
 
-    /**
-     * SensorBehaviour, is called on a sensor request message
-     */
-    private class SensorBehaviour extends OneShotBehaviour {
-
-        private SensorMapper sensorMapper = new SensorMapper();
-
-        private ACLMessage message;
-
-        public SensorBehaviour(ACLMessage msg) {
-            this.message = msg;
-        }
-
-        @Override
-        public void action() {
-
-            SensorRequestMessage sensorRequestMessage;
-            try {
-                sensorRequestMessage = gson.fromJson(
-                        message.getContent(),
-                        SensorRequestMessage.class
-                );
-            } catch (JsonSyntaxException ex) {
-                sendFailureReply(message, "Invalid JSON syntax");
-                return;
-            }
-
-            if (sensorRequestMessage.sensor == null || sensorRequestMessage.equals("")) {
-                sendFailureReply(message, "Invalid sensor");
-                return;
-            }
-
-            Sensor sensor = agentDevice.getSensorByName(sensorRequestMessage.sensor);
-            if (sensor == null) {
-                sendFailureReply(message, "Sensor not found");
-                return;
-            }
-
-            ACLMessage reply = message.createReply();
-            reply.setPerformative(ACLMessage.INFORM);
-
-            SensorValueMessage message = new SensorValueMessage(
-                    agentDevice.getId(),
-                    sensorMapper.ObjectToDto(sensor)
-            );
-            reply.setContent(gson.toJson(message));
-
-            myAgent.send(reply);
-        }
-    }
-
-    /**
-     * ActuatorBehaviour, is called on a actuator command message
-     */
-    private class ActuatorBehaviour extends OneShotBehaviour {
-
-        private ACLMessage message;
-
-        public ActuatorBehaviour(ACLMessage msg) {
-            this.message = msg;
-        }
-
-        @Override
-        public void action() {
-
-            ActuatorRequestMessage actuateMessage;
-            try {
-                actuateMessage = gson.fromJson(
-                        message.getContent(),
-                        ActuatorRequestMessage.class
-                );
-            } catch (JsonSyntaxException ex) {
-                sendFailureReply(message, "Invalid JSON syntax");
-                return;
-            }
-
-            if (actuateMessage.actuator == null || actuateMessage.actuator.equals("")) {
-                sendFailureReply(message, "No actuator name specified");
-                return;
-            }
-
-            Actuator actuator = agentDevice.getActuatorByName(actuateMessage.actuator);
-            if (actuator == null) {
-                sendFailureReply(message, "Could not find actuator: " + actuateMessage.actuator);
-                return;
-            }
-
-            try {
-                actuator.actuate(actuator.getParsedArgumentInstance(actuateMessage.arguments));
-            } catch (Exception e) {
-                sendFailureReply(message, "Failed to actuate: " + e.getMessage());
-                return;
-            }
-
-            sendSuccessReply(message);
-        }
-    }
-
-    private void sendFailureReply(ACLMessage msg, String reason) {
-        ACLMessage reply = msg.createReply();
-        reply.setPerformative(ACLMessage.FAILURE);
-        reply.setContent(reason);
-        this.send(reply);
-    }
-
-    private void sendSuccessReply(ACLMessage msg) {
-        ACLMessage reply = msg.createReply();
-        reply.setPerformative(ACLMessage.AGREE);
-        this.send(reply);
-    }
-
     protected void takeDown() {
-        agentDevice.disconnect();
-        agentDevice.getAnalyticService().closeStorage();
+        if (agentDevice != null) {
+            agentDevice.disconnect();
+            agentDevice.getAnalyticService().closeStorage();
+        }
     }
 
     private Device loadDeviceClass(String agentDeviceClassName) throws Exception {
@@ -263,7 +148,7 @@ public class ControlAgent extends Agent {
                     .asSubclass(Device.class)
                     .newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new Exception("Failed to load ControlAgent with class: " + agentDeviceClassName);
+            throw new Exception("Failed to load DeviceAgent with class: " + agentDeviceClassName);
         }
     }
 }
