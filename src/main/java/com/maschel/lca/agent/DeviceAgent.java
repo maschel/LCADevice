@@ -36,6 +36,7 @@
 package com.maschel.lca.agent;
 
 import com.maschel.lca.agent.behaviour.ActuatorBehaviour;
+import com.maschel.lca.agent.behaviour.AnalyticDataSyncBehaviour;
 import com.maschel.lca.agent.behaviour.SensorBehaviour;
 import com.maschel.lca.device.Device;
 import jade.core.Agent;
@@ -53,6 +54,7 @@ import jade.lang.acl.MessageTemplate;
  *     <li>Setup</li>
  *     <li>Connect</li>
  *     <li>Update(loop)</li>
+ *     <li>SendAnalyticData(loop)</li>
  *     <li>(Process requests)</li>
  *     <li>Disconnect</li>
  * </ul>
@@ -92,6 +94,11 @@ public class DeviceAgent extends Agent {
                 protected void onTick() {
                     agentDevice.update();
                     agentDevice.updateSensors();
+
+                    if (agentDevice.shouldPerformAnalyticDataSync()) {
+                        addBehaviour(new AnalyticDataSyncBehaviour(myAgent, agentDevice));
+                        agentDevice.setLastAnalyticSync(System.currentTimeMillis());
+                    }
                 }
             });
         }

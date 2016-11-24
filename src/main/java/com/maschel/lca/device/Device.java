@@ -45,44 +45,72 @@ import java.util.List;
  * Abstract Device class
  * This class should be extended by the device that needs to be connected the JADE agent platform.
  * When the class is extended it can be loaded into the platform:
- * java jade.Boot -gui -agents AgentName:com.maschel.lca.agent.ControlAgent(org.package.TheDeviceImplementation)
+ * java jade.Boot -gui -agents AgentName:com.maschel.lca.agent.DeviceAgent(org.package.TheDeviceImplementation)
  * The device class has the following lifecycle:
  * <ul>
- *     <li>(Device class is loaded by the agent platform)</li>
- *     <li>setup()</li>
- *     <li>Connect()</li>
- *     <li>update() (loops based on sensorUpdateInterval)</li>
+ *     <li>Load the device class</li>
+ *     <li>Setup</li>
+ *     <li>Connect</li>
+ *     <li>Update(loop)</li>
+ *     <li>SendAnalyticData(loop)</li>
  *     <li>(Process requests)</li>
- *     <li>disconnect()</li>
+ *     <li>Disconnect</li>
  * </ul>
  */
 public abstract class Device {
 
     private final String deviceId;
+    private long sensorUpdateInterval = 0;
+    private long minAnalyticSyncInterval = 0;
 
-    private final int sensorUpdateInterval;
+    private long lastAnalyticSync = System.currentTimeMillis();
+
     private Component rootComponent;
 
     private AnalyticService analyticService;
 
     /**
      * Default Device constructor
-     * This should be called using super(id, sensorUpdateInterval) in any device implementation.
+     * This should be called using super(id) in any device implementation.
      * @param deviceId The device id
-     * @param sensorUpdateInterval The interval at which sensors should be updated.
      */
-    public Device(String deviceId, int sensorUpdateInterval) {
+    public Device(String deviceId) {
         this.deviceId = deviceId;
-        this.sensorUpdateInterval = sensorUpdateInterval;
         this.rootComponent = new Component(deviceId);
         this.analyticService = new AnalyticService(deviceId);
+    }
+
+    /**
+     * Default Device constructor with analyticSync loop
+     * This should be called using super(id, minAnalyticSyncInterval) in any device implementation.
+     * @param deviceId The device id
+     * @param minAnalyticSyncInterval The minimum interval at which the agent should try to sync
+     *                                analytic data (0=disabled).
+     */
+    public Device(String deviceId, long minAnalyticSyncInterval) {
+        this(deviceId);
+        this.minAnalyticSyncInterval = minAnalyticSyncInterval;
+    }
+
+    /**
+     * Default Device constructor with analyticSync and sensorUpdate loop
+     * This should be called using super(id, minAnalyticSyncInterval, sensorUpdateInterval)in any
+     * device implementation.
+     * @param deviceId The device id
+     * @param minAnalyticSyncInterval The minimum interval at which the agent should try to sync
+     *                                analytic data (0=disabled).
+     * @param sensorUpdateInterval The interval at which sensors should be updated (0=disabled).
+     */
+    public Device(String deviceId, long minAnalyticSyncInterval, long sensorUpdateInterval) {
+        this(deviceId, minAnalyticSyncInterval);
+        this.sensorUpdateInterval = sensorUpdateInterval;
     }
 
     /**
      * Add a device sensor.
      * @param sensor The sensor to add.
      */
-    final public void addDeviceSensor(Sensor sensor) {
+    public final void addDeviceSensor(Sensor sensor) {
         rootComponent.add(sensor);
     }
 
@@ -90,13 +118,13 @@ public abstract class Device {
      * Add a device actuator.
      * @param actuator The actuator to add.
      */
-    final public void addDeviceActuator(Actuator actuator) { rootComponent.add(actuator); }
+    public final void addDeviceActuator(Actuator actuator) { rootComponent.add(actuator); }
 
     /**
      * Add a component to the device.
      * @param component The component to add.
      */
-    final public void addComponent(Component component) {
+    public final void addComponent(Component component) {
         rootComponent.add(component);
     }
 
@@ -104,7 +132,7 @@ public abstract class Device {
      * Get all the (sub)components of the device.
      * @return List of the (sub)components.
      */
-    final public List<Component> getComponents() {
+    public final List<Component> getComponents() {
         return rootComponent.getDescendantComponents();
     }
 
@@ -113,13 +141,13 @@ public abstract class Device {
      * @param name Sensor name.
      * @return {@link Sensor} instance with given sensor name or null if not found.
      */
-    final public Sensor getSensorByName(String name) { return rootComponent.getSensorByName(name); }
+    public final Sensor getSensorByName(String name) { return rootComponent.getSensorByName(name); }
 
     /**
      * Get all the (sub)sensors of the device
      * @return List of all the (sub)sensors.
      */
-    final public List<Sensor> getSensors() {
+    public final List<Sensor> getSensors() {
         return rootComponent.getDescendantSensors();
     }
 
@@ -128,13 +156,13 @@ public abstract class Device {
      * @param name Actuator name.
      * @return {@link Actuator} instance with given actuator name or null if not found.
      */
-    final public Actuator getActuatorByName(String name) { return rootComponent.getActuatorByName(name); }
+    public final Actuator getActuatorByName(String name) { return rootComponent.getActuatorByName(name); }
 
     /**
      * Get all the (sub)actuators of the device.
      * @return List of the (sub)actuators.
      */
-    final public List<Actuator> getActuators() {
+    public final List<Actuator> getActuators() {
         return rootComponent.getDescendantActuators();
     }
 
@@ -142,18 +170,30 @@ public abstract class Device {
      * Get the Device id.
      * @return The Device id.
      */
-    final public String getId() {
+    public final String getId() {
         return deviceId;
+    }
+
+    /**
+     * Set the last analytic sync time.
+     * @param lastAnalyticSync Analytic sync time in millis.
+     */
+    public final void setLastAnalyticSync(long lastAnalyticSync) {
+        this.lastAnalyticSync = lastAnalyticSync;
     }
 
     /**
      * Get the sensor update interval.
      * @return The sensor update interval.
      */
-    final public int getSensorUpdateInterval() {
+    public final long getSensorUpdateInterval() {
         return sensorUpdateInterval;
     }
 
+    /**
+     * Get the analyticService of the current Device.
+     * @return The analytic service.
+     */
     public final AnalyticService getAnalyticService() {
         return analyticService;
     }
@@ -162,8 +202,17 @@ public abstract class Device {
      * This updates the (sub)sensors of the device and all its components.
      * Note: this should not be called manually.
      */
-    final public void updateSensors() {
+    public final void updateSensors() {
         rootComponent.updateSensors();
+    }
+
+    /**
+     * Check if the device is ready for analytic data synchronisation and the minimal sync interval has passed.
+     * @return True if a sync should be performed.
+     */
+    public final Boolean shouldPerformAnalyticDataSync() {
+        return (minAnalyticSyncInterval != 0 && deviceReadyForAnalyticDataSync() &&
+                ((System.currentTimeMillis() - lastAnalyticSync) > minAnalyticSyncInterval));
     }
 
     /**
@@ -183,6 +232,14 @@ public abstract class Device {
      * Use this method to update the sensor values in the device library (if applicable).
      */
     public abstract void update();
+
+    /**
+     * This method will be called on every update (sensorUpdateInterval), if the return value is
+     * true and the minimal analytic data sync interval has passed, the device agent will try to send
+     * the available analytic data to the cloud.
+     * @return Should return True if the device is ready for sync
+     */
+    public abstract Boolean deviceReadyForAnalyticDataSync();
 
     /**
      * This method will be called when the agent(platform) will be stopped.
